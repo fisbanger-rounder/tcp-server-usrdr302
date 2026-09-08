@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PUSR DR302 Multi-Protocol Telemetry Hub</title>
+  <meta name="description" content="Centralized Multi-Protocol Server and Web Dashboard for PUSR USR-DR302 RS485-to-Ethernet Converters deployed across remote locations without VPN.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <div class="nav-brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            <path d="M18 6v12"></path>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>PUSR DR302 <span>HUB</span></h1>
+          <p class="brand-sub">Multi-Protocol Telemetry & Serial Ingestion Center</p>
+        </div>
+      </div>
+
+      <div class="nav-metrics">
+        <div class="metric-pill">
+          <span class="pulse-dot active" id="ws-indicator"></span>
+          <span id="ws-status-text">Hub Connected</span>
+        </div>
+        <div class="metric-pill port-pill">
+          <span class="port-label">TCP:</span> <strong id="metric-tcp-port">5000</strong>
+          <span class="sep">•</span>
+          <span class="port-label">HTTP:</span> <strong id="metric-http-port">3000</strong>
+          <span class="sep">•</span>
+          <span class="port-label">UDP:</span> <strong id="metric-udp-port">5001</strong>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn btn-simulator" id="btn-toggle-simulator" title="Run simulated DR302 clients for testing without hardware">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="simulator-btn-label">Start Simulator</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="main-body">
+      <!-- Navigation Sidebar -->
+      <aside class="sidebar">
+        <nav class="sidebar-menu">
+          <button class="nav-item active" data-tab="tab-dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Live Dashboard</span>
+            <span class="badge" id="badge-online-count">0</span>
+          </button>
+          
+          <button class="nav-item" data-tab="tab-stream">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            <span>Telemetry Terminal</span>
+            <span class="badge badge-accent" id="badge-packet-count">0</span>
+          </button>
+
+          <button class="nav-item" data-tab="tab-command">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span>2-Way Command TX</span>
+          </button>
+
+          <button class="nav-item" data-tab="tab-guide">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>DR302 Setup Wizard</span>
+          </button>
+
+          <button class="nav-item" data-tab="tab-simulator">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="10 8 16 12 10 16 10 8"></polygon>
+            </svg>
+            <span>Virtual DR302 Lab</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="conn-mode-summary">
+            <span class="title">Supported Modes</span>
+            <div class="mode-tags">
+              <span class="tag tag-tcp">TCP Client</span>
+              <span class="tag tag-http">HTTPD Client</span>
+              <span class="tag tag-udp">UDP Client</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Content Area -->
+      <main class="content-view">
+        
+        <!-- ================= TAB 1: LIVE DASHBOARD ================= -->
+        <section class="tab-pane active" id="tab-dashboard">
+          <!-- Summary Cards -->
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-title">Active DR302 Devices</span>
+                <span class="stat-icon icon-emerald">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </span>
+              </div>
+              <div class="stat-value" id="stat-active-devices">0</div>
+              <div class="stat-subtext"><span id="stat-total-devices">0</span> registered in fleet</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-title">Telemetry Received (RX)</span>
+                <span class="stat-icon icon-cyan">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                  </svg>
+                </span>
+              </div>
+              <div class="stat-value" id="stat-rx-packets">0</div>
+              <div class="stat-subtext"><span id="stat-rx-bytes">0 B</span> received across WAN</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-title">Commands Transmitted (TX)</span>
+                <span class="stat-icon icon-purple">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                    <polyline points="5 12 12 5 19 12"></polyline>
+                  </svg>
+                </span>
+              </div>
+              <div class="stat-value" id="stat-tx-packets">0</div>
+              <div class="stat-subtext">Downstream polls & serial writes</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-title">Heartbeat Status</span>
+                <span class="stat-icon icon-amber">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                  </svg>
+                </span>
+              </div>
+              <div class="stat-value" id="stat-heartbeat-status">Active</div>
+              <div class="stat-subtext">Watchdog monitoring NAT state</div>
+            </div>
+          </div>
+
+          <!-- Fleet Table & Active Devices -->
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Remote DR302 Fleet Overview</h2>
+                <p class="panel-desc">All connected and registered serial gateways across your remote locations (no VPN required)</p>
+              </div>
+              <div class="panel-tools">
+                <input type="text" id="device-search" class="search-input" placeholder="Search by MAC, ID or IP...">
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table class="data-table" id="devices-table">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Device Name / Alias</th>
+                    <th>Identifier / MAC</th>
+                    <th>Remote WAN / NAT IP</th>
+                    <th>Mode</th>
+                    <th>Packets (RX/TX)</th>
+                    <th>Last Seen</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="devices-tbody">
+                  <tr class="empty-row">
+                    <td colspan="8">
+                      <div class="empty-state">
+                        <div class="empty-icon">📡</div>
+                        <h3>Waiting for incoming PUSR DR302 connections</h3>
+                        <p>No devices have connected yet. Set your DR302 to TCP Client, HTTPD, or UDP mode, or start the Virtual Simulator to test immediately.</p>
+                        <button class="btn btn-primary" onclick="window.startSimulatorFromEmpty()">Start Virtual DR302 Simulator</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 2: LIVE TELEMETRY TERMINAL ================= -->
+        <section class="tab-pane" id="tab-stream">
+          <div class="terminal-container">
+            <div class="terminal-toolbar">
+              <div class="toolbar-left">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+                <span class="terminal-title">LIVE TELEMETRY INSPECTOR // MODBUS RTU & SERIAL FEED</span>
+              </div>
+              <div class="toolbar-right">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="autoscroll-toggle" checked>
+                  <span>Auto-scroll</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="hide-heartbeat-toggle" checked>
+                  <span>Filter Heartbeats</span>
+                </label>
+                <button class="btn btn-sm btn-outline" id="btn-clear-logs">Clear Logs</button>
+              </div>
+            </div>
+
+            <div class="terminal-stream" id="terminal-stream">
+              <!-- Streaming packet cards will be injected here -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 3: 2-WAY COMMAND TRANSMITTER ================= -->
+        <section class="tab-pane" id="tab-command">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Downstream Command Transmitter (Serial TX)</h2>
+                <p class="panel-desc">Transmit serial commands, Modbus RTU query frames, or raw hex to any connected PUSR DR302 across the WAN</p>
+              </div>
+            </div>
+
+            <div class="command-grid">
+              <div class="command-form">
+                <div class="form-group">
+                  <label for="cmd-target-device">Target DR302 Device</label>
+                  <select id="cmd-target-device" class="form-select">
+                    <option value="">-- Select an active TCP-connected device --</option>
+                  </select>
+                  <small class="form-help">Bi-directional downstream transmission requires an active TCP Client connection from the DR302.</small>
+                </div>
+
+                <div class="form-group">
+                  <label>Command Type</label>
+                  <div class="radio-pills">
+                    <label class="pill-option">
+                      <input type="radio" name="cmd-type" value="modbus-poll" checked>
+                      <span>Modbus RTU Poll (Fn 03)</span>
+                    </label>
+                    <label class="pill-option">
+                      <input type="radio" name="cmd-type" value="hex">
+                      <span>Raw HEX String</span>
+                    </label>
+                    <label class="pill-option">
+                      <input type="radio" name="cmd-type" value="ascii">
+                      <span>ASCII / AT Command</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Modbus Builder Fields -->
+                <div id="cmd-modbus-fields" class="subform-group">
+                  <div class="grid-3">
+                    <div class="form-group">
+                      <label for="modbus-slave-id">Slave ID (1-247)</label>
+                      <input type="number" id="modbus-slave-id" class="form-input" value="1" min="1" max="247">
+                    </div>
+                    <div class="form-group">
+                      <label for="modbus-start-addr">Start Register (0-65535)</label>
+                      <input type="number" id="modbus-start-addr" class="form-input" value="0" min="0" max="65535">
+                    </div>
+                    <div class="form-group">
+                      <label for="modbus-qty">Quantity of Regs (1-125)</label>
+                      <input type="number" id="modbus-qty" class="form-input" value="2" min="1" max="125">
+                    </div>
+                  </div>
+                  <div class="modbus-preview-box">
+                    <span class="preview-label">Generated Modbus Frame (with CRC16):</span>
+                    <code id="modbus-frame-preview">01 03 00 00 00 02 C4 0B</code>
+                  </div>
+                </div>
+
+                <!-- Raw HEX Input -->
+                <div id="cmd-hex-fields" class="subform-group" style="display: none;">
+                  <div class="form-group">
+                    <label for="hex-input-data">HEX Bytes (Space separated)</label>
+                    <input type="text" id="hex-input-data" class="form-input code-font" placeholder="e.g. 01 03 00 00 00 02 C4 0B">
+                    <small class="form-help">Example: Modbus poll or custom binary protocol.</small>
+                  </div>
+                </div>
+
+                <!-- ASCII Input -->
+                <div id="cmd-ascii-fields" class="subform-group" style="display: none;">
+                  <div class="form-group">
+                    <label for="ascii-input-data">ASCII String / Command</label>
+                    <input type="text" id="ascii-input-data" class="form-input" placeholder="e.g. AT+VER or READ_SENSORS\r\n">
+                  </div>
+                </div>
+
+                <button class="btn btn-primary btn-lg" id="btn-send-command">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                  <span>Transmit to DR302</span>
+                </button>
+                <div id="cmd-result-alert" class="alert-box" style="display: none;"></div>
+              </div>
+
+              <div class="command-info-card">
+                <h3>How Downlink Control Works</h3>
+                <p>When the remote <strong>USR-DR302</strong> establishes an outbound TCP connection to this server, the TCP socket is held permanently open via NAT keepalive heartbeats.</p>
+                <ul class="info-list">
+                  <li><strong>Instant Transmission:</strong> Any bytes sent through this console are delivered instantly across the WAN to the DR302 unit.</li>
+                  <li><strong>Transparent RS485 Output:</strong> The DR302 converts the network packet back into electrical RS485 differential signals for your downstream meters, inverters, or sensors.</li>
+                  <li><strong>Automatic Response Capture:</strong> When the RS485 slave replies, the DR302 sends the response back over the same TCP link, which is automatically decoded and displayed in the <em>Telemetry Terminal</em>!</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 4: USR-DR302 SETUP WIZARD & WAN GUIDE ================= -->
+        <section class="tab-pane" id="tab-guide">
+          <div class="guide-container">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>PUSR USR-DR302 Hardware Configuration Wizard</h2>
+                  <p class="panel-desc">Exact configuration steps for your physical USR-DR302 web console to connect without VPN</p>
+                </div>
+              </div>
+
+              <!-- Network Detect Card -->
+              <div class="network-detect-banner">
+                <div class="detect-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                  </svg>
+                  <strong>Server Network Interfaces Detected:</strong>
+                </div>
+                <div class="detected-ips" id="detected-ip-list">
+                  <!-- Injected via JS -->
+                </div>
+                <p class="wan-note">💡 For remote sites across the public Internet, enter your <strong>Public IP / Dynamic DNS domain / Cloud VPS IP</strong> into the DR302 Remote Server IP field.</p>
+              </div>
+
+              <!-- Accordion Steps -->
+              <div class="wizard-steps">
+                
+                <!-- Step 1 -->
+                <div class="wizard-card">
+                  <div class="wizard-badge">1</div>
+                  <div class="wizard-content">
+                    <h3>Initial Access to USR-DR302</h3>
+                    <p>Connect your computer directly to the DR302 LAN port or plug it into your local network switch.</p>
+                    <div class="config-table-wrap">
+                      <table class="config-table">
+                        <tr><td>Default Web IP:</td><td><code>192.168.0.7</code></td></tr>
+                        <tr><td>Default Subnet:</td><td><code>255.255.255.0</code></td></tr>
+                        <tr><td>Default Gateway:</td><td><code>192.168.0.1</code></td></tr>
+                        <tr><td>Default Username:</td><td><code>admin</code></td></tr>
+                        <tr><td>Default Password:</td><td><code>admin</code></td></tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="wizard-card highlight-card">
+                  <div class="wizard-badge">2</div>
+                  <div class="wizard-content">
+                    <h3>Mode A: Configure as TCP Client (Recommended for No-VPN)</h3>
+                    <p>Go to <strong>Local IP Config / Network</strong> -> <strong>Work Mode</strong> in the DR302 web console:</p>
+                    <div class="config-table-wrap">
+                      <table class="config-table">
+                        <tr><td><strong>Work Mode:</strong></td><td><span class="value-highlight">TCP Client</span></td></tr>
+                        <tr><td><strong>Remote Server IP/Domain:</strong></td><td><code class="copy-target" id="guide-server-ip">YOUR_SERVER_PUBLIC_IP</code></td></tr>
+                        <tr><td><strong>Remote Port:</strong></td><td><span class="value-highlight">5000</span></td></tr>
+                        <tr><td><strong>Local Port:</strong></td><td><code>0</code> (Auto dynamic)</td></tr>
+                        <tr><td><strong>Heartbeat Packet:</strong></td><td>Enable -> Set time to <code>15s</code>, Data: <code>www.usr.cn</code> (Maintains NAT state)</td></tr>
+                        <tr><td><strong>Registration Packet:</strong></td><td>Enable -> Select <em>"Connect with MAC"</em> or <em>"Connect with User Data"</em> (e.g. <code>DR302_SUBSTATION_01</code>)</td></tr>
+                      </table>
+                    </div>
+                    <div class="tip-box">
+                      <strong>Why TCP Client?</strong> Because the remote DR302 connects OUTBOUND to the central server. Routers and cellular 4G modems automatically permit outbound TCP traffic and map NAT ports, eliminating the need for expensive VPNs or static public IPs at the remote sites!
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="wizard-card">
+                  <div class="wizard-badge">3</div>
+                  <div class="wizard-content">
+                    <h3>Mode B: Configure as HTTPD Client (Web REST Mode)</h3>
+                    <p>If your remote site only allows standard web traffic (Port 80/443/3000):</p>
+                    <div class="config-table-wrap">
+                      <table class="config-table">
+                        <tr><td><strong>Work Mode:</strong></td><td><span class="value-highlight">HTTPD Client</span></td></tr>
+                        <tr><td><strong>URL Path:</strong></td><td><code>/api/telemetry</code></td></tr>
+                        <tr><td><strong>Remote Server IP/Domain:</strong></td><td><code id="guide-server-ip-http">YOUR_SERVER_PUBLIC_IP</code></td></tr>
+                        <tr><td><strong>Remote Port:</strong></td><td><span class="value-highlight">3000</span></td></tr>
+                        <tr><td><strong>HTTP Header:</strong></td><td><code>X-Device-ID: DR302_BRANCH_01</code></td></tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="wizard-card">
+                  <div class="wizard-badge">4</div>
+                  <div class="wizard-content">
+                    <h3>RS485 Serial Port Parameters</h3>
+                    <p>Under <strong>Serial Port Settings</strong>, match your connected Modbus meter, PLC, or RS485 sensor:</p>
+                    <div class="config-table-wrap">
+                      <table class="config-table">
+                        <tr><td><strong>Baud Rate:</strong></td><td><code>9600</code> (or matching your sensor, e.g. 19200, 115200)</td></tr>
+                        <tr><td><strong>Data Size:</strong></td><td><code>8</code></td></tr>
+                        <tr><td><strong>Parity:</strong></td><td><code>None</code> (or Even/Odd matching your slave)</td></tr>
+                        <tr><td><strong>Stop Bits:</strong></td><td><code>1</code></td></tr>
+                        <tr><td><strong>Modbus Gateway:</strong></td><td>Set to <em>"Modbus RTU"</em> or <em>"None (Transparent)"</em></td></tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="wizard-card">
+                  <div class="wizard-badge">5</div>
+                  <div class="wizard-content">
+                    <h3>No-VPN WAN Deployment Strategies</h3>
+                    <div class="wan-options-grid">
+                      <div class="wan-opt">
+                        <h4>Option 1: Router Port Forwarding</h4>
+                        <p>If hosting this server on a local office machine with a public broadband connection:</p>
+                        <ul>
+                          <li>Log in to your office router's admin page.</li>
+                          <li>Add Port Forwarding rules:
+                            <br><code>TCP 5000 -> Server Local IP:5000</code>
+                            <br><code>UDP 5001 -> Server Local IP:5001</code>
+                            <br><code>TCP 3000 -> Server Local IP:3000</code>
+                          </li>
+                        </ul>
+                      </div>
+                      <div class="wan-opt">
+                        <h4>Option 2: Cloud VPS (AWS / DigitalOcean / Hetzner)</h4>
+                        <p>Run this Node.js app directly on a cheap $4/mo Linux VPS:</p>
+                        <ul>
+                          <li>Has a fixed public static IP immediately.</li>
+                          <li>Remote DR302s can connect directly 24/7 without router NAT worries.</li>
+                        </ul>
+                      </div>
+                      <div class="wan-opt">
+                        <h4>Option 3: Zero-Config Cloudflare Tunnel / ngrok</h4>
+                        <p>For instant testing without changing router firewall:</p>
+                        <ul>
+                          <li>Use <code>ngrok tcp 5000</code> for TCP testing or Cloudflare Tunnel.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 5: VIRTUAL DR302 LAB ================= -->
+        <section class="tab-pane" id="tab-simulator">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Virtual PUSR DR302 Device Simulator</h2>
+                <p class="panel-desc">Simulate realistic remote DR302 units streaming live Modbus RTU, HTTPD, and UDP data for end-to-end testing</p>
+              </div>
+              <div class="panel-tools">
+                <button class="btn btn-primary" id="btn-sim-action">Start All Simulators</button>
+              </div>
+            </div>
+
+            <div class="sim-grid">
+              <!-- Simulator Card 1 -->
+              <div class="sim-card">
+                <div class="sim-header">
+                  <span class="sim-badge tcp">TCP Client</span>
+                  <span class="sim-status" id="sim-status-1">Standby</span>
+                </div>
+                <h3>Substation A - Power Meter</h3>
+                <p class="sim-meta">ID: <code>MAC-9C:A5:25:88:1A:01</code></p>
+                <div class="sim-details">
+                  <div><strong>Protocol:</strong> Modbus RTU over TCP (Port 5000)</div>
+                  <div><strong>Payload:</strong> Voltage (230V), Current (12A) holding registers</div>
+                  <div><strong>Features:</strong> Binary MAC registration packet + 15s keepalive</div>
+                </div>
+              </div>
+
+              <!-- Simulator Card 2 -->
+              <div class="sim-card">
+                <div class="sim-header">
+                  <span class="sim-badge tcp">TCP Client</span>
+                  <span class="sim-status" id="sim-status-2">Standby</span>
+                </div>
+                <h3>Factory North - Temp/Humid</h3>
+                <p class="sim-meta">ID: <code>DR302_FACTORY_NORTH</code></p>
+                <div class="sim-details">
+                  <div><strong>Protocol:</strong> Custom Cloud ID TCP Client</div>
+                  <div><strong>Payload:</strong> Modbus RTU environmental telemetry</div>
+                  <div><strong>Features:</strong> Registration string prefix + 20s keepalive</div>
+                </div>
+              </div>
+
+              <!-- Simulator Card 3 -->
+              <div class="sim-card">
+                <div class="sim-header">
+                  <span class="sim-badge http">HTTPD Client</span>
+                  <span class="sim-status" id="sim-status-3">Standby</span>
+                </div>
+                <h3>Water Pump Station 3</h3>
+                <p class="sim-meta">ID: <code>DR302_PUMP_STATION_3</code></p>
+                <div class="sim-details">
+                  <div><strong>Protocol:</strong> HTTP POST to <code>/api/telemetry</code></div>
+                  <div><strong>Payload:</strong> ASCII sensor string: Temp, Pressure, Flow</div>
+                  <div><strong>Features:</strong> Custom HTTP header identification</div>
+                </div>
+              </div>
+
+              <!-- Simulator Card 4 -->
+              <div class="sim-card">
+                <div class="sim-header">
+                  <span class="sim-badge udp">UDP Client</span>
+                  <span class="sim-status" id="sim-status-4">Standby</span>
+                </div>
+                <h3>Solar Inverter Cluster 4</h3>
+                <p class="sim-meta">ID: <code>DR302_SOLAR_INVERTER_4</code></p>
+                <div class="sim-details">
+                  <div><strong>Protocol:</strong> UDP Datagram (Port 5001)</div>
+                  <div><strong>Payload:</strong> Modbus RTU Input Registers (Solar Output kW)</div>
+                  <div><strong>Features:</strong> Connectionless lightweight datagrams</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

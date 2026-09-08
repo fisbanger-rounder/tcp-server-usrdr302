@@ -1,0 +1,18 @@
+{
+  "name": "pusr-dr302-server",
+  "version": "1.0.0",
+  "description": "Multi-protocol data ingestion server and web application for PUSR USR-DR302 devices across remote locations",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["pusr", "dr302", "tcp-server", "modbus-rtu", "iot", "industrial", "rs485"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}
