@@ -28,32 +28,32 @@ Combined with the DR302's built-in **Heartbeat Packet** mechanism, the NAT sessi
 ## Architecture Overview
 
 ```mermaid
-graph TD
-    subgraph Remote Sites "Remote Locations (Behind NAT / No VPN)"
+flowchart TD
+    subgraph RemoteSites ["Remote Locations (Behind NAT / No VPN)"]
         D1["USR-DR302 (Site 1)<br/>Mode: TCP Client<br/>+ Heartbeat & MAC Reg"] -->|Outbound TCP :5000| S1
         D2["USR-DR302 (Site 2)<br/>Mode: HTTPD Client<br/>POST /api/telemetry"] -->|Outbound HTTP :3000| S2
         D3["USR-DR302 (Site 3)<br/>Mode: UDP Client"] -->|Outbound UDP :5001| S3
         SIM["Virtual DR302 Simulator<br/>(4 Built-in Test Devices)"] -->|Loopback| S1
     end
 
-    subgraph Central Server "Central Telemetry Hub (Node.js & Express)"
+    subgraph CentralServer ["Central Telemetry Hub (Node.js & Express)"]
         S1["TCP Ingest Server<br/>(Port :5000)"]
         S2["HTTPD Ingest Endpoint<br/>(Port :3000)"]
         S3["UDP Ingest Server<br/>(Port :5001)"]
 
         HUB["Central Engine<br/>- Registration Identifier (MAC / Cloud ID)<br/>- Heartbeat & Liveness Watchdog<br/>- Modbus RTU & CRC16 Decoder<br/>- 2-Way Command Queue (TX)"]
 
-        S1 <--> HUB
+        S1 --- HUB
         S2 --> HUB
         S3 --> HUB
 
         WSS["WebSocket Broadcaster (ws)"]
-        HUB <--> WSS
+        HUB --- WSS
     end
 
-    subgraph Web UI "Modern Industrial Web App"
+    subgraph WebDashboard ["Modern Industrial Web App"]
         UI["Real-Time Dashboard (http://localhost:3000)<br/>- Live Fleet Monitoring<br/>- Hex / ASCII / Modbus RTU Terminal<br/>- 2-Way Command TX Console<br/>- USR-DR302 Setup Wizard<br/>- Virtual Simulator Lab"]
-        WSS <--> UI
+        WSS --- UI
     end
 ```
 
