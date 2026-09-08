@@ -1,0 +1,24 @@
+services:
+  pusr-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pusr-dr302-hub
+    restart: unless-stopped
+    ports:
+      # Web Dashboard & HTTPD Telemetry Ingest
+      - "3000:3000"
+      # PUSR USR-DR302 TCP Ingest (TCP Client Mode)
+      - "5000:5000"
+      # PUSR USR-DR302 UDP Ingest (UDP Client Mode)
+      - "5001:5001/udp"
+    environment:
+      - NODE_ENV=production
+      - HTTP_PORT=3000
+      - TCP_PORT=5000
+      - UDP_PORT=5001
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -111,6 +111,43 @@ Click **"Start Simulator"** in the top navigation bar to test live data ingestio
 
 ---
 
+## Docker Deployment (Recommended for Production)
+
+Run the entire hub in a lightweight, isolated container with Docker and Docker Compose.
+
+### Quick Start with Docker Compose
+```bash
+# Clone the repository
+git clone https://github.com/fisbanger-rounder/tcp-server-usrdr302.git
+cd tcp-server-usrdr302
+
+# Build and start in detached background mode
+docker compose up -d
+
+# View real-time container logs
+docker compose logs -f
+
+# Stop the container
+docker compose down
+```
+
+### Standalone Docker Build & Run
+```bash
+# Build the image
+docker build -t pusr-dr302-hub .
+
+# Run container mapping TCP, UDP, and Web ports
+docker run -d \
+  --name pusr-dr302-hub \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -p 5000:5000 \
+  -p 5001:5001/udp \
+  pusr-dr302-hub
+```
+
+---
+
 ## PUSR USR-DR302 Configuration Guide
 
 Access your physical USR-DR302 web management interface (default IP: `http://192.168.0.7`, username/password: `admin`/`admin`).
